@@ -29,7 +29,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed) {
     switch(keycode) {
     case M_SHRUGS:
-      SEND_STRING("¯\_(ツ)_/¯");
+      SEND_STRING("¯\\_(ツ)_/¯");
       break;
     case M_FLIP_TABLE:
       SEND_STRING("(ノಠ益ಠ)ノ彡┻━┻");
