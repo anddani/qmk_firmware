@@ -17,6 +17,7 @@
 #include QMK_KEYBOARD_H
 #include "muse.h"
 
+
 extern keymap_config_t keymap_config;
 
 enum planck_layers {
@@ -28,8 +29,11 @@ enum planck_layers {
 
 enum planck_keycodes {
   QWERTY = SAFE_RANGE,
-  BACKLIT
+  BACKLIT,
+  TMIN,
+  TSEC
 };
+
 
 #define LOWER MO(_LOWER)
 #define RAISE MO(_RAISE)
@@ -44,14 +48,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    * |------+------+------+------+------+------|------+------+------+------+------+------|
    * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Shift |
    * |------+------+------+------+------+------+------+------+------+------+------+------|
-   * |      | RAlt | Alt  | GUI  |Lower | Space| Bksp |Raise | Left | Down |  Up  |Right |
+   * |Timer | Timer| Alt  | GUI  |Lower | Space| Bksp |Raise | Left | Down |  Up  |Right |
    * `-----------------------------------------------------------------------------------'
    */
 [_QWERTY] = LAYOUT_planck_grid(
             KC_TAB,    KC_Q,    KC_W,    KC_E,  KC_R,   KC_T,    KC_Y,  KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
     LCTL_T(KC_ESC),    KC_A,    KC_S,    KC_D,  KC_F,   KC_G,    KC_H,  KC_J,    KC_K,    KC_L, KC_SCLN,  KC_ENT,
            KC_LSFT,    KC_Z,    KC_X,    KC_C,  KC_V,   KC_B,    KC_N,  KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_LSFT,
-           _______, KC_RALT, KC_LALT, KC_LGUI, LOWER, KC_SPC, KC_BSPC, RAISE, KC_LEFT, KC_DOWN,   KC_UP, KC_RGHT
+              TMIN,    TSEC, KC_LALT, KC_LGUI, LOWER, KC_SPC, KC_BSPC, RAISE, KC_LEFT, KC_DOWN,   KC_UP, KC_RGHT
 ),
 
   /* Lower
@@ -113,7 +117,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #ifdef AUDIO_ENABLE
   float plover_song[][2]     = SONG(PLOVER_SOUND);
   float plover_gb_song[][2]  = SONG(PLOVER_GOODBYE_SOUND);
+  float test_song[][2]  = SONG(MEGALOVANIA);
 #endif
+
+uint16_t key_timer;
+bool min_timer_on = false;
+bool sec_timer_on = false;
 
 uint32_t layer_state_set_user(uint32_t state) {
   return update_tri_layer_state(state, _LOWER, _RAISE, _ADJUST);
@@ -145,6 +154,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
       break;
+  case TMIN:
+    if (record->event.pressed) {
+      key_timer = timer_read();
+      min_timer_on = true;
+    }
+    return false;
+    break;
+  case TSEC:
+    if (record->event.pressed) {
+      key_timer = timer_read();
+      sec_timer_on = true;
+    }
+    return false;
+    break;
   }
   return true;
 }
@@ -230,6 +253,14 @@ void matrix_scan_user(void) {
         }
       }
       muse_counter = (muse_counter + 1) % muse_tempo;
+    }
+    if (min_timer_on && (timer_elapsed(key_timer) > 60 * 1000)) {
+      PLAY_SONG(plover_song);
+      min_timer_on = false;
+    }
+    if (sec_timer_on && (timer_elapsed(key_timer) > 1000)) {
+      /*PLAY_SONG(test_song);*/
+      sec_timer_on = false;
     }
   #endif
 }
